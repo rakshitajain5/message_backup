@@ -17,9 +17,6 @@ func MsgBackup(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	//if err != nil {
-	//	http.Error(w, err.Error(), http.StatusBadRequest)
-	//}
 
 	valid,invalid,partial,err := validation.RequestValidation(w, r)
 	if err.Status != http.StatusOK {

@@ -5,7 +5,6 @@ import (
 	"message_backup/models"
 	"encoding/json"
 	"message_backup/resources"
-	"fmt"
 )
 
 func ValidateHeaders(r *http.Request) (string,string,models.ErrorResponse) {

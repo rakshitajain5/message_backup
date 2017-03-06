@@ -19,7 +19,7 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", Index).Methods("POST")
 	router.HandleFunc("/hello", Hello).Methods("GET")
-	router.HandleFunc("/jcm", controllers.MsgBackup).Methods("POST")
+	router.HandleFunc("/jcm/messages/backup", controllers.MsgBackup).Methods("POST")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
