@@ -34,7 +34,7 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 		}
 		hash := hmac(message.Text, message.PhoneNo, message.DateTime)
 		/*ToDo check for category*/
-		batch.Query(insert_messages_by_users, userId, hash, message.DateTime, message.PhoneNo, message.AppType, "Category", message.ConvId, message.DvcMsgId, lastBackUpTime, message.MsgType, message.Name, message.Operation, message.Text)
+		batch.Query(insert_messages_by_users, userId, hash, message.DateTime, message.PhoneNo, message.AppType, "personal", message.ConvId, message.DvcMsgId, lastBackUpTime, message.MsgType, message.Name, message.Operation, message.Text)
 		batch.Query(update_messages_by_users, []int64{lastBackUpTime}, []string{deviceKey}, userId, hash)
 		responseCode := make(map[string]interface{})
 		responseCode["dvcMsgId"] = message.DvcMsgId
