@@ -7,20 +7,38 @@ import (
 	"message_backup/validation"
 	"message_backup/businessLogic"
 	"encoding/json"
+	"sync"
 )
 
 
 func MsgBackup(w http.ResponseWriter, r *http.Request) {
 
-	deviceKey, userId, err := validation.ValidateHeaders(r)
-	if err.Status != http.StatusOK {
-		handleError(w, err)
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	var deviceKey string
+	var userId string
+	var err1 models.ErrorResponse
+
+	var valid []models.Message
+	var invalid []models.ErrorResponse
+	var partial bool
+	var err2 models.ErrorResponse
+
+	go validation.ValidateHeaders(r, &deviceKey, &userId, &err1, &wg)
+	go validation.RequestValidation(r, &valid, &invalid, &partial, &err2, &wg)
+
+	wg.Wait()
+
+	if err1.Status != http.StatusOK {
+		handleError(w, err1)
 		return
 	}
 
-	valid,invalid,partial,err := validation.RequestValidation(w, r)
-	if err.Status != http.StatusOK {
-		handleError(w, err)
+
+
+	if err2.Status != http.StatusOK {
+		handleError(w, err2)
 		return
 	}
 

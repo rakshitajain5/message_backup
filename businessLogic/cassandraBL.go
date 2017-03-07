@@ -28,18 +28,26 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 	}
 	for i:=0; i<len(msg); i++ {
 		message := msg[i]
+		//go func() {
+		//	lastBackUpTime = time.Now().Unix()
+		//	if message.DateTime > maxMsgDateTime {
+		//		maxMsgDateTime = message.DateTime
+		//	}
+		//}()
+
 		lastBackUpTime = time.Now().Unix()
 		if message.DateTime > maxMsgDateTime {
 			maxMsgDateTime = message.DateTime
 		}
-		hash := hmac(message.Text, message.PhoneNo, message.DateTime)
+		var hash []byte
+		hmac(message.Text, message.PhoneNo, message.DateTime, &hash)
 		/*ToDo check for category*/
 		batch.Query(insert_messages_by_users, userId, hash, message.DateTime, message.PhoneNo, message.AppType, "personal", message.ConvId, message.DvcMsgId, lastBackUpTime, message.MsgType, message.Name, message.Operation, message.Text)
 		batch.Query(update_messages_by_users, []int64{lastBackUpTime}, []string{deviceKey}, userId, hash)
 		responseCode := make(map[string]interface{})
 		responseCode["dvcMsgId"] = message.DvcMsgId
 		responseCode["serMsgId"] = hash
-		responseCodes = append(responseCodes, responseCode)
+		responseCodes[i] = responseCode
 	}
 	batch.Query(insert_activities_by_devices, userId, deviceKey, lastBackUpTime, maxMsgDateTime)
 	//err := dal.PushinCass(batch)
@@ -52,9 +60,8 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 	return response,models.ErrorResponse{"","", http.StatusOK}
 }
 
-func hmac(text string, phoneNo string, msgTimestamp int64) []byte {
+func hmac(text string, phoneNo string, msgTimestamp int64, hash *[]byte) {
 	h := sha1.New()
 	h.Write([]byte(resources.MESSAGE_HASH_KEY + text + phoneNo + strconv.FormatInt(msgTimestamp, 10)))
-	bs := h.Sum(nil)
-	return bs
+	*hash = h.Sum(nil)
 }
