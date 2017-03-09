@@ -7,15 +7,17 @@ import (
 	"message_backup/validation"
 	"message_backup/businessLogic"
 	"encoding/json"
-	"sync"
+	//"sync"
 )
 
 
 func MsgBackup(w http.ResponseWriter, r *http.Request) {
 
-	var wg sync.WaitGroup
-	wg.Add(2)
+	//var wg sync.WaitGroup
+	//wg.Add(2)
 
+	c1 := make(chan models.ErrorResponse)
+	//c2 := make(chan models.ErrorResponse)
 	var deviceKey string
 	var userId string
 	var err1 models.ErrorResponse
@@ -25,10 +27,12 @@ func MsgBackup(w http.ResponseWriter, r *http.Request) {
 	var partial bool
 	var err2 models.ErrorResponse
 
-	go validation.ValidateHeaders(r, &deviceKey, &userId, &err1, &wg)
-	go validation.RequestValidation(r, &valid, &invalid, &partial, &err2, &wg)
+	go validation.ValidateHeaders(r, &deviceKey, &userId, c1)
+	go validation.RequestValidation(r, &valid, &invalid, &partial, c1)
 
-	wg.Wait()
+	//wg.Wait()
+
+	err1, err2 = <-c1, <-c1
 
 	if err1.Status != http.StatusOK {
 		handleError(w, err1)
@@ -36,11 +40,11 @@ func MsgBackup(w http.ResponseWriter, r *http.Request) {
 	}
 
 
-
 	if err2.Status != http.StatusOK {
 		handleError(w, err2)
 		return
 	}
+
 
 	response, err := businessLogic.PutInCass(userId,deviceKey,valid)
 	if err.Status != http.StatusOK {

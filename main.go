@@ -24,20 +24,16 @@ func main() {
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
+	var i int
+	test(&i)
+	fmt.Println(i)
 	fmt.Fprintf(w, "Welcome to go, %q", html.EscapeString(r.URL.Path))
+}
+
+func test(i *int) {
+	*i = 10
 }
 
 func Hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World")
 }
-
-//func msgBackup(w http.ResponseWriter, r *http.Request) {
-//	//fmt.Fprintf(w, "Hello World")
-//	decoder := json.NewDecoder(r.Body)
-//	deviceKey := r.Header.Get("X-Device-Key")
-//	if deviceKey=="" {
-//		http.Error(w, "X-Device-Key missing", http.StatusBadRequest)
-//		return
-//	}
-//	fmt.Println(string(decoder))
-//}
