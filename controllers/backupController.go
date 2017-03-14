@@ -17,7 +17,7 @@ func MsgBackup(w http.ResponseWriter, r *http.Request) {
 	//wg.Add(2)
 
 	c1 := make(chan models.ErrorResponse)
-	//c2 := make(chan models.ErrorResponse)
+	c2 := make(chan models.ErrorResponse)
 	var deviceKey string
 	var userId string
 	var err1 models.ErrorResponse
@@ -28,17 +28,18 @@ func MsgBackup(w http.ResponseWriter, r *http.Request) {
 	var err2 models.ErrorResponse
 
 	go validation.ValidateHeaders(r, &deviceKey, &userId, c1)
-	go validation.RequestValidation(r, &valid, &invalid, &partial, c1)
+	go validation.RequestValidation(r, &valid, &invalid, &partial, c2)
 
 	//wg.Wait()
 
-	err1, err2 = <-c1, <-c1
+	err1 = <-c1
 
 	if err1.Status != http.StatusOK {
 		handleError(w, err1)
 		return
 	}
 
+	err2 = <-c2
 
 	if err2.Status != http.StatusOK {
 		handleError(w, err2)
@@ -51,6 +52,9 @@ func MsgBackup(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
+
+	close(c1)
+	close(c2)
 
 	w.Header().Set("Content-Type", "application/json")
 	if partial{

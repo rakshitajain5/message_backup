@@ -71,6 +71,9 @@ func RequestValidation(r *http.Request, valid *[]models.Message, invalid *[]mode
 		//*err = models.ErrorResponse{"","", http.StatusOK}
 		c <- models.ErrorResponse{"","", http.StatusOK}
 	}
+	close(c1)
+	close(c2)
+	close(c3)
 	//wg.Done()
 }
 
