@@ -1,13 +1,15 @@
 package main
 
+import _ "net/http/pprof"
+
 import (
 	"fmt"
 	"html"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"message_backup/controllers"
+	"log"
 )
 
 type messages struct {
@@ -15,12 +17,22 @@ type messages struct {
 }
 
 func main() {
+	fmt.Println("Server starting")
+	r := http.DefaultServeMux
+	r.HandleFunc("/jcm/messages/backup", controllers.MsgBackup)
+	r.HandleFunc("/", Index)
+	//log.Fatal(http.ListenAndServe(":8080", api.Handlers()))
+	log.Fatal(http.ListenAndServe(":8080", r))
+}
 
+
+
+func Handlers() *mux.Router{
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", Index).Methods("POST")
 	router.HandleFunc("/hello", Hello).Methods("GET")
 	router.HandleFunc("/jcm/messages/backup", controllers.MsgBackup).Methods("POST")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	return router
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
