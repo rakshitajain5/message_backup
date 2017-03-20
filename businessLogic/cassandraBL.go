@@ -9,6 +9,7 @@ import (
 	"github.com/gocql/gocql"
 	//"message_backup/dal"
 	"net/http"
+	"message_backup/dal"
 )
 
 var insert_messages_by_users string = "INSERT INTO messages_by_users (user_id,msg_hash,msg_time,address,app_type,category,conv_id,device_msg_id,last_updated_tx_stamp,msg_type,name,state,text) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
@@ -42,10 +43,10 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 		responseCodes = append(responseCodes, responseCode)
 	}
 	batch.Query(insert_activities_by_devices, userId, deviceKey, lastBackUpTime, maxMsgDateTime)
-	//err := dal.PushinCass(batch)
-	//if err != nil{
-	//	return response,models.ErrorResponse{resources.CASSANDRA_SERVER_ERROR, err.Error(), http.StatusInternalServerError}
-	//}
+	err := dal.PushinCass(batch)
+	if err != nil{
+		return response,models.ErrorResponse{resources.CASSANDRA_SERVER_ERROR, err.Error(), http.StatusInternalServerError}
+	}
 	response.LastBackupTime = lastBackUpTime
 	response.LastMsgTime = maxMsgDateTime
 	response.Success = responseCodes
