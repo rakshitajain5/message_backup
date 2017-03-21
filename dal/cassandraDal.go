@@ -17,8 +17,11 @@ func initiateCassandra(){
 	}
 }
 
-func PushinCass(batch *gocql.Batch) error{
+func init() {
 	initiateCassandra()
+}
+
+func PushinCass(batch *gocql.Batch) error{
 	err := session.ExecuteBatch(batch)
 	return err
 }
