@@ -40,7 +40,7 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 		responseCode := make(map[string]interface{})
 		responseCode["dvcMsgId"] = message.DvcMsgId
 		responseCode["serMsgId"] = hash
-		responseCodes = append(responseCodes, responseCode)
+		responseCodes[i] = responseCode
 	}
 	batch.Query(insert_activities_by_devices, userId, deviceKey, lastBackUpTime, maxMsgDateTime)
 	err := dal.PushinCass(batch)

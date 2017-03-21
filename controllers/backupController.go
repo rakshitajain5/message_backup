@@ -55,8 +55,11 @@ func handleError(w http.ResponseWriter, e models.ErrorResponse) {
 	w.WriteHeader(e.Status)
 	response,err := json.Marshal(e)
 	if err != nil {
+		fmt.Println(e.Error)
+		fmt.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
+		fmt.Println(string(response))
 		fmt.Fprint(w, string(response))
 	}
 }
