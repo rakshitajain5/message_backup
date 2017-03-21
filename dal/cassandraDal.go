@@ -8,8 +8,8 @@ import(
 var session *gocql.Session
 
 func initiateCassandra(){
-	cluster := gocql.NewCluster(resources.CASSANDRA_SERVERS)
-	cluster.Keyspace = "demo"
+	cluster := gocql.NewCluster("172.23.16.14", "172.23.16.15", "172.23.16.16")
+	cluster.Keyspace = "messagemicroservice"
 	var err error
 	session, err = cluster.CreateSession()
 	if err != nil {

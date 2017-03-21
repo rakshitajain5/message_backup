@@ -7,9 +7,9 @@ import (
 	"crypto/sha1"
 	"strconv"
 	"github.com/gocql/gocql"
-	//"message_backup/dal"
 	"net/http"
 	"message_backup/dal"
+	"encoding/hex"
 )
 
 var insert_messages_by_users string = "INSERT INTO messages_by_users (user_id,msg_hash,msg_time,address,app_type,category,conv_id,device_msg_id,last_updated_tx_stamp,msg_type,name,state,text) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
@@ -53,9 +53,9 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 	return response,models.ErrorResponse{"","", http.StatusOK}
 }
 
-func hmac(text string, phoneNo string, msgTimestamp int64) []byte {
+func hmac(text string, phoneNo string, msgTimestamp int64) string {
 	h := sha1.New()
 	h.Write([]byte(resources.MESSAGE_HASH_KEY + text + phoneNo + strconv.FormatInt(msgTimestamp, 10)))
 	bs := h.Sum(nil)
-	return bs
+	return hex.EncodeToString(bs)
 }
