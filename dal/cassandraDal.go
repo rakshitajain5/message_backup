@@ -2,6 +2,7 @@ package dal
 
 import(
 	"github.com/gocql/gocql"
+	"time"
 )
 
 var session *gocql.Session
@@ -11,7 +12,7 @@ func initiateCassandra(){
 	cluster.Keyspace = "messagemicroservice"
 	cluster.ProtoVersion = 4
 	cluster.NumConns = 2
-	cluster.Timeout = 5000
+	cluster.Timeout = 10000 * time.Millisecond
 	var err error
 	session, err = cluster.CreateSession()
 	if err != nil {
