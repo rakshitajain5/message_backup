@@ -11,7 +11,6 @@ func initiateCassandra(){
 	cluster := gocql.NewCluster("172.23.16.14", "172.23.16.15", "172.23.16.16")
 	cluster.Keyspace = "messagemicroservice"
 	cluster.ProtoVersion = 4
-	cluster.NumConns = 2
 	cluster.Timeout = 10000 * time.Millisecond
 	var err error
 	session, err = cluster.CreateSession()
