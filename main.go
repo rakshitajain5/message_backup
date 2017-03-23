@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"message_backup/controllers"
+	"time"
 )
 
 type messages struct {
@@ -20,9 +21,15 @@ func main() {
 	router.HandleFunc("/", Index).Methods("POST")
 	router.HandleFunc("/hello", Hello).Methods("GET")
 	router.HandleFunc("/jcm/messages/backup", controllers.MsgBackup).Methods("POST")
-	server := http.Server{}
-	server.SetKeepAlivesEnabled(true)
-	log.Fatal(http.ListenAndServe(":8080", router))
+	srv := &http.Server{
+		Handler:      router,
+		Addr:         "127.0.0.1:8000",
+		// Good practice: enforce timeouts for servers you create!
+		WriteTimeout: 1 * time.Second,
+		ReadTimeout:  1 * time.Second,
+	}
+	srv.SetKeepAlivesEnabled(true)
+	log.Fatal(srv.ListenAndServe())
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
