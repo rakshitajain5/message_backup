@@ -21,7 +21,7 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 	var maxMsgDateTime int64 = 0
 	var lastBackUpTime int64 = 0
 	var response models.MessagesResponse
-	responseCodes := make([]map[string]interface{}, len(msg)+1)
+	responseCodes := make([]map[string]interface{}, len(msg))
 	//batch := gocql.NewBatch(gocql.LoggedBatch)
 
 	errorChannel := make(chan error, len(msg))
@@ -36,8 +36,9 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 		if message.DateTime > maxMsgDateTime {
 			maxMsgDateTime = message.DateTime
 		}
+		j := i
 		go func() {
-			fmt.Println(i)
+			fmt.Println(j)
 			hash := hmac(message.Text, message.PhoneNo, message.DateTime)
 			err := dal.QueryExecute(insert_messages_by_users, userId, hash, message.DateTime, message.PhoneNo, message.AppType, "personal", message.ConvId, message.DvcMsgId, lastBackUpTime, message.MsgType, message.Name, message.Operation, message.Text )
 			if err != nil {
@@ -53,10 +54,11 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 					responseCode := make(map[string]interface{})
 					responseCode["dvcMsgId"] = message.DvcMsgId
 					responseCode["serMsgId"] = hash
-					responseCodes[i] = responseCode
+					responseCodes[j] = responseCode
 					done <- true
 				}
 			}
+
 		}()
 	}
 
@@ -65,12 +67,25 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 		return response,models.ErrorResponse{resources.CASSANDRA_SERVER_ERROR, err.Error(), http.StatusInternalServerError}
 	}
 
-	for n := range done {
+	for i:=0;i<len(msg);i++ {
+		n := <-done
 		if !n {
 			e := <-errorChannel
 			return response,models.ErrorResponse{resources.CASSANDRA_SERVER_ERROR, e.Error(), http.StatusInternalServerError}
 		}
+		if i==(len(msg)-1){
+			close(done)
+			close(errorChannel)
+		}
 	}
+
+	//for n := range done {
+	//	if !n {
+	//		e := <-errorChannel
+	//		return response,models.ErrorResponse{resources.CASSANDRA_SERVER_ERROR, e.Error(), http.StatusInternalServerError}
+	//	}
+	//
+	//}
 	response.LastBackupTime = lastBackUpTime
 	response.LastMsgTime = maxMsgDateTime
 	response.Success = responseCodes
