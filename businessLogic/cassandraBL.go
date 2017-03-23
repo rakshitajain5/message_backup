@@ -22,7 +22,10 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 	var lastBackUpTime int64 = 0
 	var response models.MessagesResponse
 	responseCodes := make([]map[string]interface{}, len(msg))
-	batch := gocql.NewBatch(gocql.LoggedBatch)
+	//batch := gocql.NewBatch(gocql.LoggedBatch)
+
+	errorChannel := make(chan error, len(msg))
+	done := make(chan bool, len(msg))
 
 	if(len(msg) == 0) {
 		return response,models.ErrorResponse{resources.ERROR_CODE_ALL_INVALID_MESSAGES,"provide valid messages", http.StatusBadRequest}
@@ -33,19 +36,45 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 		if message.DateTime > maxMsgDateTime {
 			maxMsgDateTime = message.DateTime
 		}
-		hash := hmac(message.Text, message.PhoneNo, message.DateTime)
-		/*ToDo check for category*/
-		batch.Query(insert_messages_by_users, userId, hash, message.DateTime, message.PhoneNo, message.AppType, "personal", message.ConvId, message.DvcMsgId, lastBackUpTime, message.MsgType, message.Name, message.Operation, message.Text)
-		batch.Query(update_messages_by_users, []int64{lastBackUpTime}, []string{deviceKey}, userId, hash)
-		responseCode := make(map[string]interface{})
-		responseCode["dvcMsgId"] = message.DvcMsgId
-		responseCode["serMsgId"] = hash
-		responseCodes[i] = responseCode
+		go func() {
+			hash := hmac(message.Text, message.PhoneNo, message.DateTime)
+			query1 := gocql.Query{}
+			query1.Bind(insert_messages_by_users, userId, hash, message.DateTime, message.PhoneNo, message.AppType, "personal", message.ConvId, message.DvcMsgId, lastBackUpTime, message.MsgType, message.Name, message.Operation, message.Text)
+			err := dal.QueryExecute(query1)
+			if err != nil {
+				errorChannel <- err
+				done <- false
+
+			} else {
+				query2 := gocql.Query{}
+				query2.Bind(update_messages_by_users, []int64{lastBackUpTime}, []string{deviceKey}, userId, hash)
+				err = dal.QueryExecute(query2)
+				if err != nil {
+					errorChannel <- err
+					done <- false
+				} else {
+					responseCode := make(map[string]interface{})
+					responseCode["dvcMsgId"] = message.DvcMsgId
+					responseCode["serMsgId"] = hash
+					responseCodes[i] = responseCode
+					done <- true
+				}
+			}
+		}()
 	}
-	batch.Query(insert_activities_by_devices, userId, deviceKey, lastBackUpTime, maxMsgDateTime)
-	err := dal.PushinCass(batch)
+
+	query := gocql.Query{}
+	query.Bind(insert_activities_by_devices, userId, deviceKey, lastBackUpTime, maxMsgDateTime)
+	err := dal.QueryExecute(query)
 	if err != nil{
 		return response,models.ErrorResponse{resources.CASSANDRA_SERVER_ERROR, err.Error(), http.StatusInternalServerError}
+	}
+
+	for n := range done {
+		if !n {
+			e := <-errorChannel
+			return response,models.ErrorResponse{resources.CASSANDRA_SERVER_ERROR, e.Error(), http.StatusInternalServerError}
+		}
 	}
 	response.LastBackupTime = lastBackUpTime
 	response.LastMsgTime = maxMsgDateTime

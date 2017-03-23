@@ -27,3 +27,8 @@ func PushinCass(batch *gocql.Batch) error{
 	err := session.ExecuteBatch(batch)
 	return err
 }
+
+func QueryExecute(query gocql.Query) error{
+	err := query.Exec()
+	return err
+}
