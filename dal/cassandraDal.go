@@ -2,14 +2,14 @@ package dal
 
 import(
 	"github.com/gocql/gocql"
-	"message_backup/resources"
 )
 
 var session *gocql.Session
 
 func initiateCassandra(){
-	cluster := gocql.NewCluster(resources.CASSANDRA_SERVERS)
-	cluster.Keyspace = "demo"
+	cluster := gocql.NewCluster("127.0.0.1")
+	cluster.Keyspace = "messagemicroservice"
+	cluster.ProtoVersion = 4
 	var err error
 	session, err = cluster.CreateSession()
 	if err != nil {
@@ -17,8 +17,13 @@ func initiateCassandra(){
 	}
 }
 
-func PushinCass(batch *gocql.Batch) error{
+
+func init(){
 	initiateCassandra()
+}
+
+func PushinCass(batch *gocql.Batch) error{
+
 	err := session.ExecuteBatch(batch)
 	return err
 }
