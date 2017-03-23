@@ -8,7 +8,7 @@ import(
 var session *gocql.Session
 
 func initiateCassandra(){
-	cluster := gocql.NewCluster("172.23.16.14", "172.23.16.15", "172.23.16.16")
+	cluster := gocql.NewCluster("127.0.0.1")
 	cluster.Keyspace = "messagemicroservice"
 	cluster.ProtoVersion = 4
 	cluster.Timeout = 10000 * time.Millisecond
@@ -28,7 +28,7 @@ func PushinCass(batch *gocql.Batch) error{
 	return err
 }
 
-func QueryExecute(query gocql.Query) error{
-	err := query.Exec()
+func QueryExecute(query string, args ...interface{}) error{
+	err := session.Query(query, args...).Exec()
 	return err
 }

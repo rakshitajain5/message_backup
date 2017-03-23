@@ -1,15 +1,15 @@
 package businessLogic
 
 import (
-	"time"
 	"message_backup/models"
 	"message_backup/resources"
 	"crypto/sha1"
 	"strconv"
-	"github.com/gocql/gocql"
 	"net/http"
 	"message_backup/dal"
 	"encoding/hex"
+	"time"
+	"fmt"
 )
 
 var insert_messages_by_users string = "INSERT INTO messages_by_users (user_id,msg_hash,msg_time,address,app_type,category,conv_id,device_msg_id,last_updated_tx_stamp,msg_type,name,state,text) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
@@ -21,7 +21,7 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 	var maxMsgDateTime int64 = 0
 	var lastBackUpTime int64 = 0
 	var response models.MessagesResponse
-	responseCodes := make([]map[string]interface{}, len(msg))
+	responseCodes := make([]map[string]interface{}, len(msg)+1)
 	//batch := gocql.NewBatch(gocql.LoggedBatch)
 
 	errorChannel := make(chan error, len(msg))
@@ -37,18 +37,15 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 			maxMsgDateTime = message.DateTime
 		}
 		go func() {
+			fmt.Println(i)
 			hash := hmac(message.Text, message.PhoneNo, message.DateTime)
-			query1 := gocql.Query{}
-			query1.Bind(insert_messages_by_users, userId, hash, message.DateTime, message.PhoneNo, message.AppType, "personal", message.ConvId, message.DvcMsgId, lastBackUpTime, message.MsgType, message.Name, message.Operation, message.Text)
-			err := dal.QueryExecute(query1)
+			err := dal.QueryExecute(insert_messages_by_users, userId, hash, message.DateTime, message.PhoneNo, message.AppType, "personal", message.ConvId, message.DvcMsgId, lastBackUpTime, message.MsgType, message.Name, message.Operation, message.Text )
 			if err != nil {
 				errorChannel <- err
 				done <- false
 
 			} else {
-				query2 := gocql.Query{}
-				query2.Bind(update_messages_by_users, []int64{lastBackUpTime}, []string{deviceKey}, userId, hash)
-				err = dal.QueryExecute(query2)
+				err = dal.QueryExecute(update_messages_by_users, []int64{lastBackUpTime}, []string{deviceKey}, userId, hash)
 				if err != nil {
 					errorChannel <- err
 					done <- false
@@ -63,9 +60,7 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 		}()
 	}
 
-	query := gocql.Query{}
-	query.Bind(insert_activities_by_devices, userId, deviceKey, lastBackUpTime, maxMsgDateTime)
-	err := dal.QueryExecute(query)
+	err := dal.QueryExecute(insert_activities_by_devices, userId, deviceKey, lastBackUpTime, maxMsgDateTime)
 	if err != nil{
 		return response,models.ErrorResponse{resources.CASSANDRA_SERVER_ERROR, err.Error(), http.StatusInternalServerError}
 	}
