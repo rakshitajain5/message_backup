@@ -36,9 +36,9 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 		if message.DateTime > maxMsgDateTime {
 			maxMsgDateTime = message.DateTime
 		}
-		j := i
-		go func() {
-			fmt.Println(j)
+
+		go func(i int) {
+			fmt.Println(i)
 			hash := hmac(message.Text, message.PhoneNo, message.DateTime)
 			err := dal.QueryExecute(insert_messages_by_users, userId, hash, message.DateTime, message.PhoneNo, message.AppType, "personal", message.ConvId, message.DvcMsgId, lastBackUpTime, message.MsgType, message.Name, message.Operation, message.Text )
 			if err != nil {
@@ -54,12 +54,12 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 					responseCode := make(map[string]interface{})
 					responseCode["dvcMsgId"] = message.DvcMsgId
 					responseCode["serMsgId"] = hash
-					responseCodes[j] = responseCode
+					responseCodes[i] = responseCode
 					done <- true
 				}
 			}
 
-		}()
+		}(i)
 	}
 
 	err := dal.QueryExecute(insert_activities_by_devices, userId, deviceKey, lastBackUpTime, maxMsgDateTime)
