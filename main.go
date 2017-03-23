@@ -20,6 +20,7 @@ func main() {
 	router.HandleFunc("/", Index).Methods("POST")
 	router.HandleFunc("/hello", Hello).Methods("GET")
 	router.HandleFunc("/jcm/messages/backup", controllers.MsgBackup).Methods("POST")
+	http.Server{}.SetKeepAlivesEnabled(true)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
