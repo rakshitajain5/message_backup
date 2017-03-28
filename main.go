@@ -5,8 +5,6 @@ import (
 	"html"
 	"log"
 	"net/http"
-
-	"gopkg.in/gin-gonic/gin.v1"
 	"message_backup/controllers"
 	"github.com/gorilla/mux"
 )
@@ -32,3 +30,13 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World")
 }
 
+//func msgBackup(w http.ResponseWriter, r *http.Request) {
+//	//fmt.Fprintf(w, "Hello World")
+//	decoder := json.NewDecoder(r.Body)
+//	deviceKey := r.Header.Get("X-Device-Key")
+//	if deviceKey=="" {
+//		http.Error(w, "X-Device-Key missing", http.StatusBadRequest)
+//		return
+//	}
+//	fmt.Println(string(decoder))
+//}
