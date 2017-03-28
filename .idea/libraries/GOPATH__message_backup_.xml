@@ -5,7 +5,6 @@
       <root url="file://$PROJECT_DIR$/../github.com" />
       <root url="file://$PROJECT_DIR$/../golang.org" />
       <root url="file://$PROJECT_DIR$/../sourcegraph.com" />
-      <root url="file://$PROJECT_DIR$" />
       <root url="file://$PROJECT_DIR$/../gopkg.in" />
     </CLASSES>
     <SOURCES>
@@ -13,8 +12,10 @@
       <root url="file://$PROJECT_DIR$/../github.com" />
       <root url="file://$PROJECT_DIR$/../golang.org" />
       <root url="file://$PROJECT_DIR$/../sourcegraph.com" />
-      <root url="file://$PROJECT_DIR$" />
       <root url="file://$PROJECT_DIR$/../gopkg.in" />
     </SOURCES>
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
   </library>
 </component>
