@@ -5,47 +5,62 @@ import (
 	"message_backup/models"
 	"encoding/json"
 	"message_backup/resources"
+	"gopkg.in/gin-gonic/gin.v1"
 )
 
-func ValidateHeaders(r *http.Request) (string,string,models.ErrorResponse) {
-	deviceKey := r.Header.Get("X-Device-Key")
-	userId := r.Header.Get("X-user-id")
+func ValidateHeaders(c *gin.Context) (string,string,models.ErrorResponse) {
+	deviceKey := c.Request.Header.Get("x-device-key")
+	userId := c.Request.Header.Get("x-user-id")
 	if deviceKey != "" && userId != ""{
 		return deviceKey,userId,models.ErrorResponse{"","",http.StatusOK};
 	}
-	return deviceKey,userId,models.ErrorResponse{resources.ERROR_MSG_HEADER_MISSING, "device key or user-id header missing", http.StatusBadRequest}
+	return deviceKey,userId,models.ErrorResponse{"", "", http.StatusBadRequest}
 }
 
-func RequestValidation(w http.ResponseWriter, r *http.Request) ([]models.Message, []models.ErrorResponse, bool, models.ErrorResponse) {
+
+func JsonStructureValidation(c *gin.Context)(models.MessagesList,models.ErrorResponse){
 	var msg models.MessagesList
-	decodeJson := json.NewDecoder(r.Body)
+	decodeJson := json.NewDecoder(c.Request.Body)
 	errRes := decodeJson.Decode(&msg)
 	if errRes != nil{
-		return nil,nil,false,models.ErrorResponse{resources.INVALID_JSON_OBJECT,"invalid json body", http.StatusBadRequest}
+		return msg,models.ErrorResponse{"","", http.StatusBadRequest}
 	}
+	return msg,models.ErrorResponse{"","", http.StatusOK}
+}
 
-	var err models.ErrorResponse
-	err = jsonSignatureValidation(msg)
-	if err.Status != http.StatusOK {
-		return nil,nil,false,err
+
+func JsonSignatureValidation(msg models.MessagesList) (models.MessagesList,models.ErrorResponse) {
+	if msg.Messages == nil {
+		return msg,models.ErrorResponse{"", "No messages were provided", http.StatusBadRequest}
 	}
+	if len(msg.Messages) == 0 {
+		return msg,models.ErrorResponse{"", "no message was provided in messages array", http.StatusBadRequest}
+	}
+	if len(msg.Messages) > resources.MESSAGE_BATCH_LIMIT {
+		return msg,models.ErrorResponse{"", "batch limit can not exceed", http.StatusBadRequest}
+	}
+	return msg,models.ErrorResponse{"","", http.StatusOK}
+}
 
-	var invalid []models.ErrorResponse
+
+func RequestValidation(msg models.MessagesList) ([]models.Message, []models.Invalid, bool, models.ErrorResponse) {
+        length:= len(msg.Messages)
+	var invalid []models.Invalid
 	var valid []models.Message
 	partial := false
 
-	for i := 0; i < len(msg.Messages); i++ {
-		checkMandatoryFieldErr := checkMandatoryFields(w, msg.Messages[i])
+	for i := 0; i < length; i++ {
+		checkMandatoryFieldErr := checkMandatoryFields(msg.Messages[i])
 		if checkMandatoryFieldErr.Status == http.StatusOK{
 			checkEnumValidationErr := checkEnumValidations(msg.Messages[i])
 			if checkEnumValidationErr.Status == http.StatusOK {
 				replaceValues(&msg.Messages[i])
 				valid = append(valid, msg.Messages[i])
 			} else {
-				invalid = append(invalid, checkEnumValidationErr)
+				invalid = append(invalid,models.Invalid{checkEnumValidationErr.Code,checkEnumValidationErr.Error,msg.Messages[i].DvcMsgId})
 			}
 		} else {
-			invalid = append(invalid, checkMandatoryFieldErr)
+			invalid = append(invalid,models.Invalid{checkMandatoryFieldErr.Code,checkMandatoryFieldErr.Error,msg.Messages[i].DvcMsgId})
 		}
 	}
 	if len(valid) > 0 && len(invalid) > 0 {
@@ -54,7 +69,7 @@ func RequestValidation(w http.ResponseWriter, r *http.Request) ([]models.Message
  	return valid,invalid,partial,models.ErrorResponse{"","", http.StatusOK}
 }
 
-func checkMandatoryFields(w http.ResponseWriter, msg models.Message) models.ErrorResponse{
+func checkMandatoryFields(msg models.Message) models.ErrorResponse{
 	if msg.DvcMsgId == "" {
 		return models.ErrorResponse{resources.ERROR_CODE_DEVICE_MSG_ID, "dvcMsgId not provided", http.StatusBadRequest}
 	}
@@ -91,15 +106,3 @@ func replaceValues(msg *models.Message) {
 	}
 }
 
-func jsonSignatureValidation(msg models.MessagesList) models.ErrorResponse {
-	if msg.Messages == nil {
-		return models.ErrorResponse{resources.INVALID_JSON_OBJECT, "No messages were provided", http.StatusBadRequest}
-	}
-	if len(msg.Messages) == 0 {
-		return models.ErrorResponse{resources.INVALID_JSON_OBJECT, "no message was provided in messages array", http.StatusBadRequest}
-	}
-	if len(msg.Messages) > resources.MESSAGE_BATCH_LIMIT {
-		return models.ErrorResponse{resources.INVALID_JSON_OBJECT, "batch limit can not exceed", http.StatusBadRequest}
-	}
-	return models.ErrorResponse{"","", http.StatusOK}
-}

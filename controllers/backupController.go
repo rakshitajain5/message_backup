@@ -2,61 +2,64 @@ package controllers
 
 import (
 	"net/http"
-	"fmt"
 	"message_backup/models"
 	"message_backup/validation"
 	"message_backup/businessLogic"
-	"encoding/json"
+	"gopkg.in/gin-gonic/gin.v1"
 )
 
 
-func MsgBackup(w http.ResponseWriter, r *http.Request) {
+func MsgBackup(c *gin.Context) {
 
-	deviceKey, userId, err := validation.ValidateHeaders(r)
+	deviceKey, userId, err := validation.ValidateHeaders(c)
 	if err.Status != http.StatusOK {
-		handleError(w, err)
+		res:= models.MessagesResponse{0 ,[]string{"device key or user-id header missing"},0,0,[]models.Success{},[]models.Invalid{}}
+		c.JSON(400, res)
 		return
 	}
 
-	valid,invalid,partial,err := validation.RequestValidation(w, r)
+
+	msg,err := validation.JsonStructureValidation(c)
 	if err.Status != http.StatusOK {
-		handleError(w, err)
+		res:= models.MessagesResponse{0 ,[]string{"Invalid Json Body"},0,0,[]models.Success{},[]models.Invalid{}}
+		c.JSON(400, res)
+		return
+	}
+
+	msg1,err:= validation.JsonSignatureValidation(msg)
+	if err.Status != http.StatusOK {
+		res:= models.MessagesResponse{0 ,[]string{err.Error},0,0,[]models.Success{},[]models.Invalid{}}
+		c.JSON(400, res)
+		return
+	}
+
+	valid,invalid,partial,err := validation.RequestValidation(msg1)
+	if err.Status != http.StatusOK {
+		res:= models.MessagesResponse{0 ,[]string{err.Error},0,0,[]models.Success{},[]models.Invalid{}}
+		c.JSON(400, res)
 		return
 	}
 
 	response, err := businessLogic.PutInCass(userId,deviceKey,valid)
 	if err.Status != http.StatusOK {
-		handleError(w, err)
+		res:= models.MessagesResponse{0 ,[]string{err.Error},0,0,[]models.Success{},[]models.Invalid{}}
+		c.JSON(err.Status, res)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+
 	if partial{
 		response.Status = 2
 		response.Invalid = invalid
-		w.WriteHeader(http.StatusAccepted)
+		c.JSON(202, response)
+		return
 
 	} else {
 		response.Status = 1
 		response.Invalid = invalid
-		w.WriteHeader(http.StatusOK)
-	}
-	res,errRes := json.Marshal(response)
-	if errRes != nil {
-		http.Error(w, errRes.Error(), http.StatusInternalServerError)
+		c.JSON(200, response)
 		return
 	}
-	fmt.Fprint(w, string(res))
 
-}
 
-func handleError(w http.ResponseWriter, e models.ErrorResponse) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(e.Status)
-	response,err := json.Marshal(e)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	} else {
-		fmt.Fprint(w, string(response))
-	}
 }

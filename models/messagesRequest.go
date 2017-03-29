@@ -4,7 +4,7 @@ type MessagesList struct {
 	Messages []Message `json:"messages"`
 }
 
-var Abc string = "sss";
+
 
 type Message struct {
 	DvcMsgId string `json:"dvcMsgId"`
@@ -20,3 +20,13 @@ type Message struct {
 
 
 
+type Invalid struct {
+	Code        string `json:"code"`
+	Error       string `json:"error"`
+	DeviceMsgId string `json:"dvcMsgId"`
+}
+
+type Success struct {
+	DeviceMsgId string `json:"dvcMsgId"`
+	ServerId    string `json:"serMsgId"`
+}

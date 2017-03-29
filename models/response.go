@@ -1,9 +1,10 @@
 package models
 
 type MessagesResponse struct {
-	Status int `json:"status"`
+	Status int8 `json:"status"`
+	Errors []string `json:"errors"`
 	LastBackupTime int64 `json:"lastBackupTime"`
 	LastMsgTime int64 `json:"lastMsgTime"`
-	Success interface{} `json:"success"`
-	Invalid []ErrorResponse `json:"invalid"`
+	Success []Success `json:"success"`
+	Invalid []Invalid `json:"invalid"`
 }

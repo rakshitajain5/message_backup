@@ -20,16 +20,17 @@ var insert_activities_by_devices string = `INSERT INTO activities_by_devices (us
 
 
 func PutInCass(userId string, deviceKey string, msg []models.Message) (models.MessagesResponse, models.ErrorResponse){
+	length:= len(msg)
 	var maxMsgDateTime int64
 	var lastBackUpTime int64
 	var response models.MessagesResponse
-	responseCodes := make([]map[string]interface{}, len(msg))
+	responseCodes:= []models.Success{}
 	batch := gocql.NewBatch(gocql.LoggedBatch)
 
-	if(len(msg) == 0) {
-		return response,models.ErrorResponse{resources.ERROR_CODE_ALL_INVALID_MESSAGES,"provide valid messages", http.StatusBadRequest}
+	if(length == 0) {
+		return response,models.ErrorResponse{"","provide valid messages", http.StatusBadRequest}
 	}
-	for i:=0; i<len(msg); i++ {
+	for i:=0; i<length; i++ {
 		message := msg[i]
 		lastBackUpTime = time.Now().Unix()
 		if message.DateTime > maxMsgDateTime {
@@ -40,18 +41,15 @@ func PutInCass(userId string, deviceKey string, msg []models.Message) (models.Me
 		/*ToDo check for category*/
 		batch.Query(insert_messages_by_users, userId, hash, message.DateTime, message.PhoneNo, message.AppType, "personal", message.ConvId, message.DvcMsgId, lastBackUpTime, message.MsgType, message.Name, message.Operation, message.Text)
 		batch.Query(update_messages_by_users, []int64{lastBackUpTime}, []string{deviceKey}, userId, hash)
-		responseCode := make(map[string]interface{})
-		responseCode["dvcMsgId"] = message.DvcMsgId
-		responseCode["serMsgId"] = hash
+		responseCode :=models.Success{message.DvcMsgId,hash}
 		responseCodes = append(responseCodes, responseCode)
 	}
 	batch.Query(insert_activities_by_devices, userId, deviceKey, lastBackUpTime, maxMsgDateTime)
 
-
 	err := dal.PushinCass(batch)
 
 	if err != nil{
-		return response,models.ErrorResponse{resources.CASSANDRA_SERVER_ERROR, err.Error(), http.StatusInternalServerError}
+		return response,models.ErrorResponse{"", "error while pushing to cassandra", http.StatusInternalServerError}
 	}
 
 	response.LastBackupTime = lastBackUpTime
