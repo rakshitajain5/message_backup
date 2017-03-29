@@ -1,0 +1,49 @@
+{
+	"ImportPath": "message_backup",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "github.com/gocql/gocql",
+			"Comment": "pre-node-events-461-g1f87449",
+			"Rev": "1f874493e9e5aebe46b312593cbd9cb5d3946eda"
+		},
+		{
+			"ImportPath": "github.com/gocql/gocql/internal/lru",
+			"Comment": "pre-node-events-461-g1f87449",
+			"Rev": "1f874493e9e5aebe46b312593cbd9cb5d3946eda"
+		},
+		{
+			"ImportPath": "github.com/gocql/gocql/internal/murmur",
+			"Comment": "pre-node-events-461-g1f87449",
+			"Rev": "1f874493e9e5aebe46b312593cbd9cb5d3946eda"
+		},
+		{
+			"ImportPath": "github.com/gocql/gocql/internal/streams",
+			"Comment": "pre-node-events-461-g1f87449",
+			"Rev": "1f874493e9e5aebe46b312593cbd9cb5d3946eda"
+		},
+		{
+			"ImportPath": "github.com/golang/snappy",
+			"Rev": "553a641470496b2327abcac10b36396bd98e45c9"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Comment": "v1.3.0-3-g999ef73",
+			"Rev": "999ef73f5d50979cf6d12afed1726325b63f9570"
+		},
+		{
+			"ImportPath": "github.com/hailocab/go-hostpool",
+			"Rev": "e80d13ce29ede4452c43dea11e79b9bc8a15b478"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "906cda9512f77671ab44f8c8563b13a8e707b230"
+		},
+		{
+			"ImportPath": "gopkg.in/inf.v0",
+			"Comment": "v0.9.0",
+			"Rev": "3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4"
+		}
+	]
+}
