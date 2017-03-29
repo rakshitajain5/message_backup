@@ -12,7 +12,7 @@ func main() {
 	r := gin.New()
 
 	// Global middleware
-	r.Use(gin.Logger())
+	//r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 
 
