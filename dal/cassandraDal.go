@@ -7,7 +7,7 @@ import(
 var session *gocql.Session
 
 func initiateCassandra(){
-	cluster := gocql.NewCluster("172.23.115.20","172.23.115.21","172.23.115.22")
+	cluster := gocql.NewCluster("172.23.115.14","172.23.115.15","172.23.115.16")
 	cluster.Keyspace = "messagemicroservice"
 	cluster.ProtoVersion = 4
 	//cluster.Timeout = 600*time.Microsecond
