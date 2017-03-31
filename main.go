@@ -25,7 +25,7 @@ func main() {
 	})
 
 	r.POST("/jcm/messages/backup", func(c *gin.Context){controllers.MsgBackup(c)})
-	r.Run(":8080")
+	r.Run(":3000")
 
 }
 
