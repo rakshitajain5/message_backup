@@ -14,6 +14,9 @@ import (
 
 )
 
+
+
+
 var insert_messages_by_users string = `INSERT INTO messages_by_users (user_id,msg_hash,msg_time,address,app_type,category,conv_id,device_msg_id,last_updated_tx_stamp,msg_type,name,state,text) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
 var update_messages_by_users string = `UPDATE messages_by_users SET created_tx_stamp = created_tx_stamp+?, device_key = device_key+? WHERE user_id =? AND msg_hash = ?`
 var insert_activities_by_devices string = `INSERT INTO activities_by_devices (user_id,device_key,last_backup_time,last_msg_time) VALUES(?,?,?,?)`
